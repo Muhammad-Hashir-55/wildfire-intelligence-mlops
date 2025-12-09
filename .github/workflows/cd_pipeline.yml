@@ -1,0 +1,13 @@
+name: Wildfire MLOps CD (Build Only)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-container:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Build Docker Image
+        run: docker build -f docker/Dockerfile -t wildfire_api:test .

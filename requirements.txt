@@ -1,0 +1,14 @@
+fastapi
+uvicorn
+pandas
+numpy
+scikit-learn
+matplotlib
+seaborn
+prefect
+deepchecks
+pytest
+httpx
+joblib
+python-multipart
+anywidget
