@@ -9,3 +9,5 @@ __pycache__/
 venv/
 .env
 app/__pycache__
+
+#testing
