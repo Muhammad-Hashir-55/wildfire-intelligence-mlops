@@ -1,11 +1,11 @@
 name: Wildfire MLOps CI Pipeline
 
-# Trigger on push to main branch
+# Trigger on push to master branch
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "master" ]
   pull_request:
-    branches: [ "main" ]
+    branches: [ "master" ]
 
 jobs:
   build-and-test:
