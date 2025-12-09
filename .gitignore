@@ -1,0 +1,11 @@
+# Ignore huge data files
+data/raw/
+data/processed/
+
+# Ignore Python cache
+__pycache__/
+*.pyc
+.pytest_cache/
+venv/
+.env
+app/__pycache__

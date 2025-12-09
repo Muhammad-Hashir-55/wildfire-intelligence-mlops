@@ -1,0 +1,38 @@
+name: Wildfire MLOps CI Pipeline
+
+# Trigger on push to main branch
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+    # 1. Checkout Code
+    - uses: actions/checkout@v3
+
+    # 2. Set up Python
+    - name: Set up Python 3.9
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.9"
+
+    # 3. Install Dependencies
+    - name: Install Dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+    
+    # 4. Run Data Validation (DeepChecks)
+    # We run the script that generates the summary in terminal
+    - name: Run DeepChecks Drift Detection
+      run: python tests/test_model.py
+
+    # 5. Run API Unit Tests
+    # We use your new terminal-friendly script
+    - name: Run API Unit Tests
+      run: python tests/test_api.py

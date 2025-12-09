@@ -1,0 +1,44 @@
+
+services:
+  # Service 1: Your Wildfire API
+  api:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    container_name: wildfire_api
+    ports:
+      - "8000:8000"
+    volumes:
+      # Sync local folders to container for live development
+      - ./app:/app/app
+      - ./models:/app/models
+    environment:
+      - DATABASE_URL=postgresql://user:password@db:5432/wildfire_db
+    depends_on:
+      - db
+    networks:
+      - wildfire_network
+
+  # Service 2: The "Bonus" Spatial Database
+  # We use PostGIS image instead of standard Postgres for Geospatial support
+  db:
+    image: postgis/postgis:15-3.3
+    container_name: wildfire_db
+    restart: always
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: wildfire_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - wildfire_network
+
+volumes:
+  postgres_data:
+
+networks:
+  wildfire_network:
+    driver: bridge
