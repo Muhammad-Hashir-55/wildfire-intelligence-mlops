@@ -1,6 +1,7 @@
+version: '3.8'
 
 services:
-  # Service 1: Your Wildfire API
+  # 1. FastAPI Backend
   api:
     build:
       context: .
@@ -9,7 +10,6 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      # Sync local folders to container for live development
       - ./app:/app/app
       - ./models:/app/models
     environment:
@@ -19,8 +19,23 @@ services:
     networks:
       - wildfire_network
 
-  # Service 2: The "Bonus" Spatial Database
-  # We use PostGIS image instead of standard Postgres for Geospatial support
+  # 2. Streamlit Frontend (NEW!)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: wildfire_ui
+    ports:
+      - "8501:8501"
+    environment:
+      # This URL tells Streamlit how to talk to the API inside the docker network
+      - API_URL=http://api:8000
+    depends_on:
+      - api
+    networks:
+      - wildfire_network
+
+  # 3. PostGIS Database
   db:
     image: postgis/postgis:15-3.3
     container_name: wildfire_db
