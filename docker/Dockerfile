@@ -16,8 +16,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy the entire project code
 COPY . .
 
-# Make the start script executable
-RUN chmod +x docker/start.sh
+# --- NEW LINE: Fix Windows Line Endings (CRLF -> LF) ---
+RUN sed -i 's/\r$//' docker/start.sh
 
 # Make the start script executable
 RUN chmod +x docker/start.sh
