@@ -1,17 +1,18 @@
 #!/bin/bash
 
-echo "🔥 [1/2] Triggering Training inside Docker Container..."
-# This sends the command into the running container
-docker-compose exec api python src/train.py
+echo "🔥 [1/2] Triggering Prefect Orchestration Flow..."
+# OLD COMMAND: docker-compose exec api python src/train.py
+# NEW COMMAND: Runs the flow, which trains AND sends the Discord alert
+docker-compose exec api python flows/training_flow.py
 
-# Check if the previous command worked
+# Check if the flow succeeded
 if [ $? -eq 0 ]; then
-    echo "✅ Training Successful! Models updated."
+    echo "✅ Pipeline Success! Discord Notification Sent."
     
     echo "🔄 [2/2] Restarting API to load new models..."
     docker-compose restart api
     
     echo "🚀 System is Live with New Brains!"
 else
-    echo "❌ Training Failed. API was not restarted."
+    echo "❌ Flow Failed. Check logs above."
 fi
