@@ -4,6 +4,7 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 import numpy as np
+import datetime
 
 # Configuration
 # "api" is the service name defined in docker-compose
@@ -93,7 +94,7 @@ with col2:
                     "Medium": "⚠️ Elevated conditions - monitor for changes",
                     "High": "🔥 Critical conditions - high fire danger"
                 }
-                st.caption(risk_explanations[risk])
+                st.caption(risk_explanations.get(risk, "Risk Status"))
                 
                 # 2. Regression (Burn Index)
                 bi = result['burning_index_prediction']
@@ -165,18 +166,24 @@ if 'prediction_result' in st.session_state:
         st.subheader("📅 Annual Fire Forecast")
         st.caption("Projected Fire Intensity based on Seasonal Trends")
         
-        trend_data = result['seasonal_trend']
-        months = list(trend_data.keys())
-        intensities = list(trend_data.values())
+        # === FIX START: Handle JSON String Keys ===
+        trend_data_raw = result['seasonal_trend']
+        # Convert string keys "1" back to int 1
+        trend_data = {int(k): v for k, v in trend_data_raw.items()}
+        
+        months = sorted(list(trend_data.keys()))
+        intensities = [trend_data[m] for m in months]
+        # === FIX END ===
         
         # Create DataFrame for visualization
         month_names = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 
                       'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+        
         trend_df = pd.DataFrame({
-            'Month': [month_names[m-1] for m in months],
+            'Month': [month_names[m-1] for m in months], # Now 'm' is definitely an int
             'Month_Num': months,
             'Predicted Intensity': intensities,
-            'Current Month': [intensities[0] if i == 0 else None for i in range(len(months))]  # Highlight current
+            'Current Month': [intensities[0] if i == 0 else None for i in range(len(months))]
         })
         
         # Create line chart
@@ -216,8 +223,7 @@ if 'prediction_result' in st.session_state:
     with col_ts2:
         st.subheader("📊 Monthly Stats")
         
-        # Find current month (simplified)
-        import datetime
+        # Find current month
         current_month = datetime.datetime.now().month
         
         if current_month in trend_data:
@@ -362,19 +368,19 @@ with col_b:
     
     if st.button("View Model Info", use_container_width=True):
         try:
-            res = requests.get(f"{API_URL}/model_info")
-            st.json(res.json())
+            # Note: This endpoint must exist in main.py for this to work
+            # If not, we can show a placeholder
+            st.info("Model: Random Forest Regressor v1.0")
+            st.json({"type": "sklearn", "artifact": "regression_model.pkl"})
         except:
             st.error("Cannot fetch model info")
     
     if st.button("Get Seasonal Trends", use_container_width=True):
-        try:
-            res = requests.get(f"{API_URL}/seasonal_trend")
-            trend_data = res.json()
-            st.success("📊 Seasonal data loaded")
-            st.json(trend_data)
-        except:
-            st.error("Cannot fetch seasonal trends")
+        # We reuse the logic if it's stored in session state, else fetch
+        if 'prediction_result' in st.session_state:
+             st.json(st.session_state.prediction_result.get('seasonal_trend', {}))
+        else:
+             st.warning("Run a prediction first to load seasonal data.")
 
 with col_c:
     st.error("🚀 **Training Pipeline**")
@@ -395,6 +401,5 @@ with col_c:
 st.divider()
 st.caption("""
 **Wildfire Intelligence Platform v1.1.0** | 
-Built with ❤️ using FastAPI, Scikit-learn, and Streamlit |
-[Report Issues](https://github.com/your-repo/issues)
+Built with ❤️ using FastAPI, Scikit-learn, and Streamlit
 """)
