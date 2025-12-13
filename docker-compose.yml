@@ -17,6 +17,7 @@ services:
       - ./models:/app/models
       # CRITICAL: Give container access to Data for training
       - ./data:/app/data
+      - ./flows:/app/flows
     environment:
       - DATABASE_URL=postgresql://user:password@db:5432/wildfire_db
     depends_on:
