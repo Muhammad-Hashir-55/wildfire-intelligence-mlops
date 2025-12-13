@@ -12,3 +12,4 @@ httpx
 joblib
 python-multipart
 anywidget
+numpy
