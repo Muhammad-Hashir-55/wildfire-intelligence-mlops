@@ -10,8 +10,13 @@ services:
     ports:
       - "8000:8000"
     volumes:
+      # Sync Code (so you can edit locally)
       - ./app:/app/app
+      - ./src:/app/src
+      # Sync Models (so the container saves .pkl files to your laptop)
       - ./models:/app/models
+      # CRITICAL: Give container access to Data for training
+      - ./data:/app/data
     environment:
       - DATABASE_URL=postgresql://user:password@db:5432/wildfire_db
     depends_on:
@@ -19,7 +24,7 @@ services:
     networks:
       - wildfire_network
 
-  # 2. Streamlit Frontend (NEW!)
+  # 2. Streamlit Frontend
   frontend:
     build:
       context: ./frontend
@@ -28,7 +33,6 @@ services:
     ports:
       - "8501:8501"
     environment:
-      # This URL tells Streamlit how to talk to the API inside the docker network
       - API_URL=http://api:8000
     depends_on:
       - api
