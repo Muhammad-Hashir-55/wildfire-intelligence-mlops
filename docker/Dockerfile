@@ -19,6 +19,9 @@ COPY . .
 # Make the start script executable
 RUN chmod +x docker/start.sh
 
+# Make the start script executable
+RUN chmod +x docker/start.sh
+
 # Expose the port
 EXPOSE 8000
 
