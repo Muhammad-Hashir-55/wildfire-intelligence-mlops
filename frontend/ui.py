@@ -8,7 +8,7 @@ import datetime
 
 # Configuration
 # "api" is the service name defined in docker-compose
-API_URL = "http://api:8000"
+API_URL = "http://localhost:8000"
 
 st.set_page_config(
     page_title="Wildfire Intelligence Platform", 
