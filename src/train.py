@@ -6,6 +6,7 @@ from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier
 from sklearn.metrics import mean_squared_error, accuracy_score, classification_report
 from sklearn.cluster import KMeans
 from sklearn.preprocessing import LabelEncoder
+from sklearn.decomposition import PCA
 
 # Paths
 DATA_PATH = "data/processed/california_wildfire.csv"
@@ -19,7 +20,7 @@ def train_all_tasks():
     if df.empty:
         print("❌ Error: Dataset is empty. Run preprocess.py first.")
         return
-
+    
     # ==========================================
     # TASK 1: REGRESSION (Predict Fire Intensity)
     # Target: 'bi' (Burning Index)
@@ -91,7 +92,49 @@ def train_all_tasks():
     
     joblib.dump(kmeans, f"{MODEL_DIR}/clustering_model.pkl")
     print("✅ Clustering Model Saved.")
+
+    # ==========================================
+    # TASK 4: DIMENSIONALITY REDUCTION (PCA)
+    # Reduce weather features to 2D for visualization
+    # ==========================================
+    print("\n🧩 Training Task 4: Dimensionality Reduction (PCA)...")
+    
+    # Fit PCA on the weather features to reduce to 2D
+    pca = PCA(n_components=2)
+    pca.fit(df[reg_features])
+    
+    # Save the PCA model
+    joblib.dump(pca, f"{MODEL_DIR}/pca_model.pkl")
+    print("✅ PCA Model Saved.")
+
+    # ==========================================
+    # TASK 5: TIME SERIES (SEASONALITY)
+    # Calculate monthly average burning index trends
+    # ==========================================
+    print("\n📈 Training Task 5: Time Series (Seasonality)...")
+    
+    # Ensure datetime is correct
+    if 'datetime' in df.columns:
+        df['datetime'] = pd.to_datetime(df['datetime'])
+        df['month'] = df['datetime'].dt.month
+        
+        # Calculate average Burning Index (BI) per month
+        seasonal_trend = df.groupby('month')['bi'].mean().to_dict()
+        
+        # Save this dictionary (Month -> Avg BI)
+        joblib.dump(seasonal_trend, f"{MODEL_DIR}/seasonal_model.pkl")
+        print("✅ Seasonal Model Saved.")
+    else:
+        print("⚠️ Skipping Seasonality Task: 'datetime' column not found")
+
     print("\n🎉 All Systems Go! Models are ready in 'models/'")
+    print("📁 Models created:")
+    print("   - regression_model.pkl")
+    print("   - classification_model.pkl")
+    print("   - label_encoder.pkl")
+    print("   - clustering_model.pkl")
+    print("   - pca_model.pkl")
+    print("   - seasonal_model.pkl")
 
 if __name__ == "__main__":
     train_all_tasks()
