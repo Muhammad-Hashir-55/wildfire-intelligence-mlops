@@ -13,3 +13,5 @@ joblib
 python-multipart
 anywidget
 numpy
+google-generativeai
+python-dotenv

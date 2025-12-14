@@ -1,15 +1,32 @@
 import joblib
 import pandas as pd
 import os
+import google.generativeai as genai
 from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+from typing import Dict, Any
 from app.schemas import WeatherInput, PredictionOutput
+from dotenv import load_dotenv
 
 # 1. Initialize the FastAPI Application
 app = FastAPI(
     title="Wildfire Intelligence API",
-    description="Predicts Fire Intensity, Risk Levels, Recovery Zones, PCA visualization, and Seasonal Trends.",
-    version="1.1.0"
+    description="Predicts Fire Intensity, Risk Levels, Recovery Zones, PCA visualization, and Seasonal Trends with GenAI Reporting.",
+    version="1.2.0"
 )
+
+# --- GEMINI AI CONFIGURATION ---
+# ⚠️ PASTE YOUR GOOGLE AI STUDIO KEY HERE
+load_dotenv()
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY_ML_P")
+
+try:
+    genai.configure(api_key=GEMINI_API_KEY)
+    ai_model = genai.GenerativeModel('gemini-1.5-flash')
+    print("✅ Gemini AI System Configured")
+except Exception as e:
+    print(f"⚠️ Gemini AI Config Failed: {e}")
+    ai_model = None
 
 # Global dictionary to hold loaded models
 models = {}
@@ -69,7 +86,7 @@ def health_check():
     return {
         "status": "healthy", 
         "models_loaded": loaded_models,
-        "version": "1.1.0"
+        "version": "1.2.0"
     }
 
 # 4. Prediction Endpoint
@@ -137,6 +154,44 @@ def predict(data: WeatherInput):
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Prediction Error: {str(e)}")
+
+# --- NEW: GEMINI AI ENDPOINT ---
+
+class ReportRequest(BaseModel):
+    risk_level: str
+    bi: float
+    location: str
+    conditions: Dict[str, Any]
+
+@app.post("/generate_report")
+def generate_ai_report(req: ReportRequest):
+    """
+    Generates a tactical response plan using Gemini 1.5 Flash.
+    """
+    if not ai_model:
+        raise HTTPException(status_code=503, detail="AI Model not configured (Check API Key)")
+        
+    prompt = f"""
+    Act as a Wildfire Incident Commander. 
+    Current Situation at {req.location}:
+    - Fire Risk Level: {req.risk_level}
+    - Burning Index Intensity: {req.bi}
+    - Weather Conditions: {req.conditions}
+    
+    Generate a concise, tactical 3-point action plan.
+    1. Immediate Action (Evacuation/Alerts)
+    2. Resource Allocation (Water/Air support)
+    3. Community Safety Advice.
+    
+    Keep it professional and urgent.
+    """
+    
+    try:
+        response = ai_model.generate_content(prompt)
+        return {"report": response.text}
+    except Exception as e:
+        return {"report": "⚠️ AI System Overload. Please rely on manual protocols."}
+
 
 # 5. Additional Endpoints for Enhanced Functionality
 
@@ -218,9 +273,10 @@ def model_info():
 @app.get("/")
 def home():
     return {
-        "message": "Wildfire Intelligence System v1.1.0 is Online",
+        "message": "Wildfire Intelligence System v1.2.0 is Online",
         "endpoints": {
             "predict": "POST /predict - Get all predictions",
+            "generate_report": "POST /generate_report - GenAI Tactical Plan",
             "health": "GET /health - Check API health",
             "seasonal": "GET /seasonal_trend - Get monthly trends",
             "pca": "POST /pca_projection - Get PCA coordinates",
@@ -228,4 +284,3 @@ def home():
             "docs": "GET /docs - Interactive API documentation"
         }
     }
-
