@@ -25,7 +25,7 @@ from sklearn.model_selection import train_test_split
 
 # Path to your processed data
 # Using raw string r"..." handles Windows backslashes correctly
-DATA_PATH = "data/processed/california_wildfire.csv"
+DATA_PATH = "data/sample_wildfire.csv"
 
 def test_data_drift_and_integrity():
     print("\n🧪 Starting DeepChecks Suite (Drift & Integrity)...")

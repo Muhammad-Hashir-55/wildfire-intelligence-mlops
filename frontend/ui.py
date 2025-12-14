@@ -20,22 +20,59 @@ st.set_page_config(
 st.title("🔥 Wildfire Intelligence & Recovery Platform")
 st.markdown("""
 **Domain:** Earth & Environmental Intelligence  
-**System Status:** 🟢 Online | **Model Version:** v1.1.0 (Random Forest + K-Means + PCA + Seasonality)
+**System Status:** 🟢 Online | **Model Version:** v1.2.0 (RF + K-Means + PCA + Gemini AI)
 """)
 
-# --- SIDEBAR: INPUTS ---
+# --- SIDEBAR: INPUTS & LIVE DATA ---
 st.sidebar.header("🌍 Input Weather Conditions")
 
 def user_input_features():
-    lat = st.sidebar.slider("Latitude", 32.5, 42.0, 34.05, 0.1)
-    lon = st.sidebar.slider("Longitude", -124.5, -114.0, -118.25, 0.1)
-    tmmn = st.sidebar.number_input("Min Temperature (K)", 270.0, 320.0, 290.5, 0.1)
-    tmmx = st.sidebar.number_input("Max Temperature (K)", 270.0, 330.0, 305.2, 0.1)
-    rmin = st.sidebar.slider("Min Humidity (%)", 0.0, 100.0, 12.5, 0.1)
-    rmax = st.sidebar.slider("Max Humidity (%)", 0.0, 100.0, 45.0, 0.1)
-    vs = st.sidebar.slider("Wind Speed (m/s)", 0.0, 20.0, 5.4, 0.1)
-    pr = st.sidebar.number_input("Precipitation (mm)", 0.0, 50.0, 0.0, 0.1)
-    erc = st.sidebar.slider("Energy Release Component (Dryness)", 0.0, 100.0, 48.0, 0.1)
+    # 1. Location Selection
+    st.sidebar.subheader("📍 Location")
+    lat = st.sidebar.number_input("Latitude", 32.0, 42.0, 34.05, 0.01)
+    lon = st.sidebar.number_input("Longitude", -125.0, -114.0, -118.25, 0.01)
+    
+    # 2. Live Weather Button logic
+    # We use session state to ensure values stick after button press
+    if 'tmmn' not in st.session_state:
+        # Initialize defaults
+        st.session_state.update({
+            'tmmn': 290.5, 'tmmx': 305.2, 'rmin': 12.5, 'rmax': 45.0,
+            'vs': 5.4, 'pr': 0.0, 'erc': 48.0
+        })
+
+    if st.sidebar.button("📡 Fetch Live Weather (Free)"):
+        try:
+            with st.spinner("Connecting to Open-Meteo Satellite..."):
+                # Open-Meteo API Call (No Key Required)
+                url = f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&current=temperature_2m,relative_humidity_2m,rain,wind_speed_10m&daily=temperature_2m_max,temperature_2m_min&timezone=auto"
+                w_data = requests.get(url).json()
+                
+                curr = w_data['current']
+                daily = w_data['daily']
+                
+                # Map API data to our model features & update Session State
+                st.session_state['tmmn'] = daily['temperature_2m_min'][0] + 273.15 # C to Kelvin
+                st.session_state['tmmx'] = daily['temperature_2m_max'][0] + 273.15
+                st.session_state['rmin'] = float(curr['relative_humidity_2m']) - 10 # Estimate min
+                st.session_state['rmax'] = float(curr['relative_humidity_2m']) + 10 # Estimate max
+                st.session_state['vs'] = float(curr['wind_speed_10m']) / 3.6 # km/h to m/s
+                st.session_state['pr'] = float(curr['rain'])
+                # ERC is hard to get from simple weather APIs, keep default or randomize slightly
+                
+            st.sidebar.success("✅ Live Data Loaded!")
+        except Exception as e:
+            st.sidebar.error(f"Weather Fetch Failed: {e}")
+
+    # 3. The Sliders (Bound to Session State)
+    st.sidebar.subheader("️Condition Parameters")
+    tmmn = st.sidebar.number_input("Min Temperature (K)", 270.0, 320.0, value=st.session_state['tmmn'])
+    tmmx = st.sidebar.number_input("Max Temperature (K)", 270.0, 330.0, value=st.session_state['tmmx'])
+    rmin = st.sidebar.slider("Min Humidity (%)", 0.0, 100.0, value=st.session_state['rmin'])
+    rmax = st.sidebar.slider("Max Humidity (%)", 0.0, 100.0, value=st.session_state['rmax'])
+    vs = st.sidebar.slider("Wind Speed (m/s)", 0.0, 20.0, value=st.session_state['vs'])
+    pr = st.sidebar.number_input("Precipitation (mm)", 0.0, 50.0, value=st.session_state['pr'])
+    erc = st.sidebar.slider("Energy Release Component (Dryness)", 0.0, 100.0, value=st.session_state['erc'])
     
     data = {
         "tmmn": tmmn, "tmmx": tmmx,
@@ -82,6 +119,7 @@ with col2:
                 
                 # Store result in session state for later use
                 st.session_state.prediction_result = result
+                st.session_state.last_input = input_data # Save input for Gemini
                 
                 # 1. Classification (Risk)
                 risk = result['risk_level_prediction']
@@ -154,10 +192,51 @@ with col2:
         if 'prediction_result' not in st.session_state:
             st.info("👆 Click 'Generate Prediction' to run the AI models")
 
-# If we have results, show additional visualizations
+# If we have results, show additional visualizations AND Gemini AI
 if 'prediction_result' in st.session_state:
     result = st.session_state.prediction_result
     
+    # --- NEW: GEMINI AI SECTION ---
+    st.divider()
+    st.subheader("🧠 Gemini Commander AI")
+    st.caption("Generative AI Tactical Response Strategy")
+    
+    col_ai1, col_ai2 = st.columns([1, 3])
+    
+    with col_ai1:
+        if st.button("📝 Generate Tactical Plan", use_container_width=True):
+            with st.spinner("Analyzing tactical options with Gemini 1.5 Flash..."):
+                try:
+                    # Prepare payload for LLM
+                    # We use the inputs stored in session state + prediction results
+                    llm_payload = {
+                        "risk_level": result['risk_level_prediction'],
+                        "bi": result['burning_index_prediction'],
+                        "location": f"{input_data['latitude']}, {input_data['longitude']}",
+                        "conditions": st.session_state.get('last_input', input_data)
+                    }
+                    
+                    # Call backend LLM endpoint
+                    llm_res = requests.post(f"{API_URL}/generate_report", json=llm_payload)
+                    
+                    if llm_res.status_code == 200:
+                        report = llm_res.json()["report"]
+                        st.session_state.ai_report = report # Save it
+                    else:
+                        st.error("AI Service Unavailable")
+                except Exception as e:
+                    st.error(f"AI Error: {e}")
+
+    with col_ai2:
+        if 'ai_report' in st.session_state:
+            st.markdown(f"""
+            <div style="background-color:#f0f2f6; padding:20px; border-radius:10px; border-left: 5px solid #6366f1;">
+                {st.session_state.ai_report}
+            </div>
+            """, unsafe_allow_html=True)
+        else:
+            st.info("Click the button to generate an incident response plan.")
+
     # --- NEW VISUAL 1: TIME SERIES FORECAST ---
     st.divider()
     col_ts1, col_ts2 = st.columns([3, 1])
@@ -368,8 +447,6 @@ with col_b:
     
     if st.button("View Model Info", use_container_width=True):
         try:
-            # Note: This endpoint must exist in main.py for this to work
-            # If not, we can show a placeholder
             st.info("Model: Random Forest Regressor v1.0")
             st.json({"type": "sklearn", "artifact": "regression_model.pkl"})
         except:
@@ -400,6 +477,6 @@ with col_c:
 # Footer
 st.divider()
 st.caption("""
-**Wildfire Intelligence Platform v1.1.0** | 
-Built with ❤️ using FastAPI, Scikit-learn, and Streamlit
+**Wildfire Intelligence Platform v1.2.0** | 
+Built with ❤️ using FastAPI, Scikit-learn, Gemini AI, and Streamlit
 """)
