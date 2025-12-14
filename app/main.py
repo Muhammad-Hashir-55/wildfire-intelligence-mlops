@@ -22,7 +22,7 @@ GEMINI_API_KEY = os.getenv("GEMINI_API_KEY_ML_P")
 
 try:
     genai.configure(api_key=GEMINI_API_KEY)
-    ai_model = genai.GenerativeModel('gemini-1.5-flash')
+    ai_model = genai.GenerativeModel('gemini-2.5-flash')
     print("✅ Gemini AI System Configured")
 except Exception as e:
     print(f"⚠️ Gemini AI Config Failed: {e}")
@@ -166,7 +166,7 @@ class ReportRequest(BaseModel):
 @app.post("/generate_report")
 def generate_ai_report(req: ReportRequest):
     """
-    Generates a tactical response plan using Gemini 1.5 Flash.
+    Generates a tactical response plan using Gemini 2.5 Flash.
     """
     if not ai_model:
         raise HTTPException(status_code=503, detail="AI Model not configured (Check API Key)")

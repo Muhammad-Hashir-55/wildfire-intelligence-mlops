@@ -205,7 +205,7 @@ if 'prediction_result' in st.session_state:
     
     with col_ai1:
         if st.button("📝 Generate Tactical Plan", use_container_width=True):
-            with st.spinner("Analyzing tactical options with Gemini 1.5 Flash..."):
+            with st.spinner("Analyzing tactical options with Gemini 2.5 Flash..."):
                 try:
                     # Prepare payload for LLM
                     # We use the inputs stored in session state + prediction results
@@ -230,7 +230,7 @@ if 'prediction_result' in st.session_state:
     with col_ai2:
         if 'ai_report' in st.session_state:
             st.markdown(f"""
-            <div style="background-color:#f0f2f6; padding:20px; border-radius:10px; border-left: 5px solid #6366f1;">
+            <div style="background-color:#f0f2f6; padding:20px; border-radius:10px; border-left: 5px solid #6366f1; color:black;">
                 {st.session_state.ai_report}
             </div>
             """, unsafe_allow_html=True)
