@@ -12,7 +12,7 @@ from src.train import train_all_tasks
 # --- CONFIG ---
 # Replace this with your actual Discord Webhook URL for the Bonus
 # If you don't have one, leave it blank, the code handles it safely.
-DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1447918534054379713/Z7OboLvMlvIJ0f8iHnF1nfHvKZ-AbwLLbAC5EtlWf8pf4PB8N4uEjI6l92GDsh9jMsau" 
+DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1450136736238796947/Bl0JBjHUUeQbiqt7f_o-76zcrnVlu1-bHHHKZS8Y4r-dORJwZVJOy-5kyB2z6pPNWoKE" 
 
 @task(name="Run ML Training")
 def run_training_script():
