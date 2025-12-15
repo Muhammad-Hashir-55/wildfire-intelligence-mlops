@@ -1,11 +1,10 @@
 name: Wildfire MLOps CI Pipeline
 
-# Trigger on push to master branch
 on:
   push:
-    branches: [ "master" ]
+    branches: [ "master", "main" ]
   pull_request:
-    branches: [ "master" ]
+    branches: [ "master", "main" ]
 
 jobs:
   build-and-test:
@@ -27,12 +26,29 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
     
-    # 4. Run Data Validation (DeepChecks)
-    # We run the script that generates the summary in terminal
+    # 4. Run Data Validation
     - name: Run DeepChecks Drift Detection
       run: python tests/test_model.py
 
     # 5. Run API Unit Tests
-    # We use your new terminal-friendly script
     - name: Run API Unit Tests
       run: python tests/test_api.py
+
+    # 6. DISCORD NOTIF - SUCCESS
+    # We use ${{ secrets.DISCORD_WEBHOOK }} because the file doesn't exist online
+    - name: Discord Notification - Success
+      if: success()
+      uses: Ilshidur/action-discord@master
+      env:
+        DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+      with:
+        args: '✅ BOOM! CI Pipeline Passed! System is Certified! 🚀🔥'
+
+    # 7. DISCORD NOTIF - FAILURE
+    - name: Discord Notification - Failure
+      if: failure()
+      uses: Ilshidur/action-discord@master
+      env:
+        DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+      with:
+        args: '❌ ERROR! Build Failed! Check the logs! 💀⚠️'
