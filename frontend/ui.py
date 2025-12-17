@@ -11,13 +11,13 @@ import datetime
 # "api" is the service name defined in docker-compose
 API_URL = "http://api:8000"
 
-import os
+# import os
 
-# Configuration
-# "api" is the service name defined in docker-compose
-# If running on Docker (Hugging Face), use localhost. 
-# If running locally with Docker Compose, use 'backend'.
-API_URL = os.getenv("API_URL", "http://api:8000")
+# # Configuration
+# # "api" is the service name defined in docker-compose
+# # If running on Docker (Hugging Face), use localhost. 
+# # If running locally with Docker Compose, use 'backend'.
+# API_URL = os.getenv("API_URL", "http://api:8000")
 
 
 st.set_page_config(
