@@ -1,4 +1,4 @@
-name: Wildfire MLOps CI Pipeline
+name: Wildfire MLOps CI & CD Pipeline
 
 on:
   push:
@@ -34,21 +34,26 @@ jobs:
     - name: Run API Unit Tests
       run: python tests/test_api.py
 
-    # 6. DISCORD NOTIF - SUCCESS
-    # We use ${{ secrets.DISCORD_WEBHOOK }} because the file doesn't exist online
+    # 6. Build Docker Image (INTEGRATED STEP)
+    # Using your specific path: docker/Dockerfile
+    - name: Build Docker Image
+      run: docker build -f docker/Dockerfile -t wildfire_api:latest .
+
+    # 7. DISCORD NOTIF - SUCCESS
+    # Only runs if Tests passed AND Docker built successfully
     - name: Discord Notification - Success
       if: success()
       uses: Ilshidur/action-discord@master
       env:
         DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
       with:
-        args: '✅ BOOM! CI Pipeline Passed! System is Certified! 🚀🔥'
+        args: '✅ BOOM! Tests Passed & Docker Image Built! System is Certified! 🚀🔥'
 
-    # 7. DISCORD NOTIF - FAILURE
+    # 8. DISCORD NOTIF - FAILURE
     - name: Discord Notification - Failure
       if: failure()
       uses: Ilshidur/action-discord@master
       env:
         DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
       with:
-        args: '❌ ERROR! Build Failed! Check the logs! 💀⚠️'
+        args: '❌ ERROR! Build or Tests Failed! Check the logs! 💀⚠️'
