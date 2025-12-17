@@ -5,10 +5,13 @@ import plotly.express as px
 import plotly.graph_objects as go
 import numpy as np
 import datetime
+import os
 
 # Configuration
 # "api" is the service name defined in docker-compose
-API_URL = "http://api:8000"
+# If running on Docker (Hugging Face), use localhost. 
+# If running locally with Docker Compose, use 'backend'.
+API_URL = os.getenv("API_URL", "http://api:8000")
 
 st.set_page_config(
     page_title="Wildfire Intelligence Platform", 
